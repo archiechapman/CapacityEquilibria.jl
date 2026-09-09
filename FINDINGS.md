@@ -90,15 +90,36 @@ JuMP model. Phase 2 therefore has to build the `MPCCModel` directly for the pena
 which reintroduces exactly the hand-translation risk the JuMP path removes, so the two
 routes need checking against each other rather than being assumed equivalent.
 
+## F-0005 — The courtesy PATH licence lifts the demonstration size limit, and its absence fails loudly rather than quietly.
+
+- tier: validated
+- status: settled
+- date: 2026-09-09
+- evidence: `test/runtests.jl`, testset "PATH licence lifts the demonstration size limit"; a 400-variable LCP solves to `worst = 0.0` with `PATH_LICENSE_STRING` set and returns `OTHER_ERROR` with a `NaN` residual without it, both branches run before the test was written
+- boundary: PATHSolver v1.7.9 on this machine, with the courtesy licence string published at `pages.cs.wisc.edu/~ferris/path/julia/LICENSE`; assumes 400 variables is above the demonstration limit and below any other, which the two-branch check establishes for this problem shape; the licence is dated to expire 31 December 2035, and says nothing about nonzero counts, which is the other demonstration limit and is untested
+- supersedes: none
+
+The concern this settles is not whether a licence exists but whether its absence is
+detectable. It is: PATH does not silently truncate or degrade, it refuses, and the refusal
+propagates as a `NaN` residual that fails a threshold rather than passing one. So the
+failure mode that would have been dangerous — a large model quietly solved as something
+smaller — is not the failure mode that occurs.
+
+The test skips when `PATH_LICENSE_STRING` is unset rather than failing, since an unlicensed
+checkout is a legitimate state, and logs why. What it does not do is pass.
+
+The string is a courtesy licence for general use, not an individually issued academic one.
+It is not committed anywhere in these repositories and should not be.
+
 ---
 
 ## What this does not establish
 
 - Nothing about correctness on any model of anything. There is no equilibrium in this
   package yet, and F-0001 is a solver check, not a modelling one.
-- Nothing about problems at realistic scale. The smoke test is 2×2 and runs under PATH's
-  demonstration licence; the academic licence is not yet registered, so the first real
-  model is also the first test of that path.
+- Nothing about problems at realistic scale. The largest problem solved here is a
+  400-variable LCP built to test the licence (F-0005), not a model of anything; CCOpt has
+  only ever been run on the 2×2.
 - Nothing about CCOpt's accuracy relative to PATH beyond agreement to 1e-6 on one problem
   with one solution. Where the two disagree is the interesting case and has not occurred.
 - Nothing about the penalty method's behaviour. F-0004 says it cannot be reached through
@@ -109,9 +130,10 @@ routes need checking against each other rather than being assumed equivalent.
 
 ## What remains
 
-1. Register the PATH academic licence and re-run F-0001 with it, confirming the
-   demonstration-licence fallback is not what has been passing. A **configuration**
-   problem, and it blocks any model large enough to matter.
+1. ~~Register the PATH licence.~~ Done — F-0005. The courtesy licence solves 400
+   variables and its absence is detectable. An individually issued academic licence is
+   still worth having before the closed-loop runs, since the courtesy string is shared and
+   dated.
 2. Build the direct `MPCCModels.MPCCModel` route so the penalty method is reachable, and
    check it against the JuMP route on the F-0001 problem (F-0004). A **code** problem,
    scheduled for Phase 2, and the point at which the two formulations could first diverge.

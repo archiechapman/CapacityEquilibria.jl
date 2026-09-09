@@ -1,4 +1,5 @@
 using CapacityEquilibria
+using LinearAlgebra
 using Test
 
 # The Phase 0 smoke test. Its job is to fail here, on a problem whose answer is known by
@@ -59,5 +60,28 @@ build() = lcp_model(M, Q)
 
     @testset "an unknown backend is refused" begin
         @test_throws ArgumentError solve_complementarity(build, :ipopt)
+    end
+
+    @testset "PATH licence lifts the demonstration size limit" begin
+        # PATHSolver falls back to a demonstration licence -- 300 variables, 2000
+        # nonzeros -- when none is configured, and nothing in a small solve reveals
+        # which one is in force. This builds a 400-variable LCP, which is over that
+        # limit and under nothing else, so it solves if and only if a licence took.
+        #
+        # Without one, PATH returns OTHER_ERROR and the residual is NaN, which fails
+        # the threshold below rather than passing quietly. That is checked behaviour,
+        # not an assumption: both branches were run before this test was written.
+        if !haskey(ENV, "PATH_LICENSE_STRING")
+            @info "PATH_LICENSE_STRING not set; skipping the licence check. " *
+                  "Models above 300 variables will fail until it is. See README.md."
+            @test_skip false
+        else
+            n = 400
+            Mn = Matrix(2.0I, n, n) + diagm(1 => fill(0.5, n - 1)) +
+                 diagm(-1 => fill(0.5, n - 1))
+            qn = [isodd(i) ? -4.0 : 1.0 for i in 1:n]
+            sol = solve_complementarity(() -> lcp_model(Mn, qn), :path)
+            @test lcp_residual(Mn, qn, sol.x).worst < TOL
+        end
     end
 end

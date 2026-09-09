@@ -17,22 +17,33 @@ julia --project -e 'using Pkg; Pkg.instantiate()'
 julia --project -e 'using Pkg; Pkg.test()'
 ```
 
-Eleven tests should pass in about a minute after precompilation.
+Twelve tests should pass in about a minute after precompilation (eleven, with one skipped, if
+no PATH licence is configured — see below).
 
 ### PATH licence
 
-PATHSolver.jl falls back to a size-limited demonstration licence when none is configured.
-That is enough for the test suite and will not be enough for a real equilibrium, so register
-the free academic licence before it starts mattering rather than when a size limit is first
-hit:
+PATHSolver.jl falls back to a demonstration licence — 300 variables, 2000 nonzeros — when
+none is configured. That is enough for the test suite here and will not be enough for a real
+equilibrium.
+
+A courtesy licence covering unlimited problem size is published by the PATH authors at
+<https://pages.cs.wisc.edu/~ferris/path/julia/LICENSE>, currently dated to 31 December 2035.
+Set it before it starts mattering, rather than when a size limit is first hit:
 
 ```
-export PATH_LICENSE_STRING="..."      # bash
-$env:PATH_LICENSE_STRING = "..."      # PowerShell
+export PATH_LICENSE_STRING="<string from the URL above>"     # bash
+$env:PATH_LICENSE_STRING = "<string from the URL above>"     # PowerShell, this session
+setx PATH_LICENSE_STRING "<string from the URL above>"       # PowerShell, permanently
 ```
 
-The licence is issued at <https://pages.cs.wisc.edu/~ferris/path.html>. Nothing in this
-repository records one, and nothing should.
+The test suite checks this rather than trusting it: with the variable set, a 400-variable
+LCP solves; without it, PATH returns `OTHER_ERROR` and a `NaN` residual, so an unlicensed
+run fails a threshold rather than passing one (`FINDINGS.md` F-0005). The testset skips,
+with a note, when the variable is absent.
+
+That string is a shared courtesy licence, not an individually issued academic one — worth
+requesting your own from <https://pages.cs.wisc.edu/~ferris/path.html> before the closed-loop
+runs. **No licence string is recorded anywhere in this repository, and none should be.**
 
 ## Usage
 
