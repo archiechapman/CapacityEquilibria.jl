@@ -20,10 +20,10 @@ Checked by `check_decision_log.py`. Ids are stable and never reused.
   repositories, engine and everything-else; three repositories, splitting the replications from the
   mechanism work because they carry different embargo dates; a private monorepo with a filtered public
   mirror of the engine
-- decision: Three repositories. `CapacityEquilibria.jl` (public, to be registered) holds the engine;
-  `CapacityEquilibriaBenchmarks.jl` (public once its first case passes) holds published models with
-  published answers; `AdequacyMechanismSandpit.jl` (private) holds the mechanism programme. Dependencies run
-  downstream only and never back.
+- decision: Three repositories. `CapacityEquilibria.jl` holds the engine and is the one intended to be
+  public and registered; `CapacityEquilibriaBenchmarks.jl` holds published models with published answers;
+  `AdequacyMechanismSandpit.jl` holds the mechanism programme. Dependencies run downstream only and never
+  back. All three were created private on 2026-09-09; see the note below on when each opens.
 - evidence: judgement, no measurement — the constraint is not performance but Julia packaging and GitHub
   visibility. A registered package cannot depend on a private or unregistered one, and GitHub visibility is
   per-repository, so a subdirectory cannot be held back. The engine is wanted public immediately and the
@@ -32,13 +32,28 @@ Checked by `check_decision_log.py`. Ids are stable and never reused.
   into one is a day. Splitting later means either a history rewrite or publishing a history that was written
   on the assumption nobody would read it, which is the specific thing this avoids.
 - revisit_if: The benchmarks repo never accumulates a second case, in which case it has no reason to exist
-  separately from the engine; or Julia gains a way to scope visibility below the repository.
+  separately from the engine; or Julia gains a way to scope visibility below the repository; or this repo
+  is still private once it has a working engine, which would mean the intent recorded here has quietly
+  lapsed rather than been changed.
 
 The rejected monorepo option is the one most likely to be re-proposed, because atomic cross-cutting commits
 are genuinely nicer to work with. It was rejected because the mirror has to be maintained by tooling, the
 public history is synthetic, and an outside contribution to the mirror has nowhere clean to land. The cost
 that replaces it — a core change silently breaking downstream work — is real and is paid for with reverse CI
 rather than with a merge.
+
+**On visibility, and why this entry no longer says "public" in the present tense.** All three repositories
+were created private. Wanting this one public is what forced the split and is still the intent, but on the
+day the split happened this repository held an `AGENTS.md` and a decision log and no Julia code, and there
+is nothing to be gained from publishing process scaffolding. Going public later is a settings toggle with
+the history intact; going public early cannot be undone. So the trigger is code: this repository opens
+once it has an engine someone could actually use, which in practice means the complementarity plumbing and
+the solver harness, and registration follows from there.
+
+The other two are governed by their own logs and are not covered by that trigger —
+`CapacityEquilibriaBenchmarks.jl` D-0002 opens on its Phase 1 gate, and `AdequacyMechanismSandpit.jl`
+D-0001 opens per publication. The three dates are deliberately different and should not be collapsed into
+one release event.
 
 ## D-0002 — PATH is the oracle; CCOpt.jl is the object under test.
 
