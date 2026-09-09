@@ -2,3 +2,7 @@
 # Python bytecode from the guardrail gates (ci/gates/, sync/)
 __pycache__/
 *.py[cod]
+
+# This is a library: consumers resolve their own versions (DECISIONS.md, D-0001).
+# The repositories downstream of this one commit theirs, deliberately.
+/Manifest.toml
