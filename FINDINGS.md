@@ -240,4 +240,8 @@ classification, are its `FINDINGS.md` F-0010 and `scripts/negative_controls.jl`.
    **code** problem, and the first thing Phase 1 will press on.
 4. Report F-0007 upstream with the benchmarks repository's test case, and check whether a
    later CCOpt release has fixed it before the `CCOpt = "0.1"` bound is widened.
-5. ~~Confirm the direct route's tests fail when the model is broken.~~ Done — F-0008.
+5. Decide what replaces the recomputed residual as a pass criterion on a degenerate problem,
+   where it measures the dual's arbitrariness rather than the solver's accuracy
+   (`CapacityEquilibriaBenchmarks.jl` F-0015, and the note appended to D-0002). Open, and
+   the first thing Phase 4 will press on if the monolithic MPCC is built.
+6. ~~Confirm the direct route's tests fail when the model is broken.~~ Done — F-0008.

@@ -75,6 +75,19 @@ one release event.
   the one that is wrong — which would be a finding in its own right and should be recorded as one before the
   decision changes.
 
+**A limit on this decision, found 2026-09-11 and recorded rather than absorbed.** The recomputed
+residual is not always a measure of accuracy. On a degenerate complementarity problem whose dual is an
+unbounded ray, a solver can return a correct primal and an arbitrary dual, and the residual is then the
+product of that arbitrary dual with the solver's small primal error — a large number that says where along
+the ray the solver stopped rather than whether it solved anything. `CapacityEquilibriaBenchmarks.jl`
+F-0015 has the case: four points at which the penalty method's recomputed residual is 1e-3 while its
+primal agrees with PATH's to 1e-8. The decision above is unchanged, because the alternative it rejects —
+believing a termination status — is worse in every case including this one. What changes is the claim it
+supports: a small residual is evidence of a solution, a large one is evidence of a solution *or* of an
+unbounded dual, and telling those apart needs the problem's structure rather than the number. Downstream
+work that thresholds a residual on a possibly-degenerate problem should say which of the two it is
+assuming.
+
 PATH is commercial software under a free academic licence, which conflicts with the portfolio's usual
 preference for open-source-only dependencies. That preference is deliberately not applied here, and the
 inversion is written into `AGENTS.md` as a hard rule so that removing the licence dependency does not look
