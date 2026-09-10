@@ -110,9 +110,13 @@ build() = lcp_model(M, Q)
             @test sols[b].x ≈ sols[:path].x atol = TOL
         end
         # The two relaxation routes are the same method on the same problem, with and
-        # without the MathOptComplements bridges. They should coincide far more closely
-        # than the tolerance: a gap here would mean the bridges changed the problem.
-        @test sols[:ccopt].x ≈ sols[:ccopt_relaxation].x atol = 1e-12
+        # without the MathOptComplements bridges. They agree *exactly* — bit for bit, not
+        # to a tolerance — because the bridges build the same lifted NLP that `lcp_mpcc`
+        # builds by hand, in the same variable order, and MadNLP is deterministic. Equality
+        # is therefore the honest assertion: any tolerance here would be a threshold with
+        # nothing to threshold. If this ever fails, the bridges have changed what they
+        # construct, which is a fact worth learning immediately rather than at 1e-12.
+        @test sols[:ccopt].x == sols[:ccopt_relaxation].x
     end
 
     @testset "an unknown backend is refused, and the direct backends refuse a builder" begin
