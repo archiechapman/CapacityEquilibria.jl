@@ -100,8 +100,8 @@ the answer is that the hand-translation risk it names did not materialise.
 - tier: validated
 - status: settled
 - date: 2026-09-10
-- evidence: `test/runtests.jl`, testsets "LCPVerticalModel is the LCP, callback by callback", "CCOpt (relaxation, direct route)", "CCOpt (penalty, direct route)" and "the four backends agree", 41/41 passing — on the F-0001 problem the direct relaxation route returns a recomputed residual of 3.8e-9 at distance 1.3e-9 from PATH's point, the JuMP route the same to twelve digits, and the penalty route 2.2e-8 at distance 7.2e-9, all under a 1e-6 tolerance set before either was run; `src/lcp_nlp.jl` and `src/mpcc.jl` are the route
-- boundary: CCOpt v0.1.0 over MadNLP v0.10.1, both methods at their default options apart from silence; one 2×2 LCP here, with the 14- and 18-variable Murphy–Smeers cases carried by the benchmarks repository's own ledger; the agreement of the two relaxation routes is established only on problems whose map is affine and whose variables are all nonnegative, which is the only lifting the bridges are asked to do — free variables or a nonlinear map would exercise bridges these do not and the agreement would have to be re-established; PATH returns this problem exactly, at residual 0.0, so the comparison of accuracies is not meaningful here and is made on the larger cases downstream instead; what matters is that neither CCOpt method sets the tolerance, which was fixed in advance; the failure mode is an index slip in the hand-written NLP that a single test point does not expose, which the point's all-distinct coordinates and the solver agreement argue against without excluding
+- evidence: `test/runtests.jl`, testsets "LCPVerticalModel is the LCP, callback by callback", "CCOpt (relaxation, direct route)", "CCOpt (penalty, direct route)" and "the four backends agree", 41/41 passing — on the F-0001 problem the direct relaxation route returns a recomputed residual of 3.8e-9 at distance 1.3e-9 from PATH's point, the JuMP route the identical point (max-norm difference exactly 0.0, asserted with `==`), and the penalty route 2.2e-8 at distance 7.2e-9, all under a 1e-6 tolerance set before either was run; `src/lcp_nlp.jl` and `src/mpcc.jl` are the route
+- boundary: CCOpt v0.1.0 over MadNLP v0.10.1, both methods at their default options apart from silence; one 2×2 LCP here, with the 14- and 18-variable Murphy–Smeers cases carried by the benchmarks repository's own ledger; the agreement of the two relaxation routes is exact and structural, which makes it brittle in a useful way: it is established only on problems whose map is affine and whose variables are all nonnegative, which is the only lifting the bridges are asked to do, and any change to the bridges' variable ordering would break it even where the solutions still agreed — free variables or a nonlinear map would exercise bridges these do not, and the agreement would have to be re-established rather than assumed; PATH returns this problem exactly, at residual 0.0, so the comparison of accuracies is not meaningful here and is made on the larger cases downstream instead; what matters is that neither CCOpt method sets the tolerance, which was fixed in advance; the failure mode is an index slip in the hand-written NLP that a single test point does not expose, which the point's all-distinct coordinates and the solver agreement argue against without excluding
 - supersedes: none — settles F-0004
 
 The route: `LCPVerticalModel(M, q)` is the LCP as a feasibility NLP in `z = (x, w)` with
@@ -110,14 +110,22 @@ The route: `LCPVerticalModel(M, q)` is the LCP as a feasibility NLP in `z = (x, 
 `CCOpt.RelaxationSolver` or `CCOpt.PenaltySolver`. No JuMP, no bridges, no automatic
 differentiation (D-0004).
 
-Two things the agreement establishes. First, the bridges are innocent: the relaxation
-method given the bridged JuMP model and given the hand-built model returns the same
-iterate to twelve digits, so whatever CCOpt does on these problems, it does to the problem
-it was meant to be given. Second, the pairing on the direct route — two index vectors,
-which is the one place the two routes can differ by construction
-(`docs/COMPLEMENTARITY_PAIRING.md`) — is right: a swapped pair would have sent both direct
-solves to a different problem than the one PATH solved, and the recomputed residual would
-have said so.
+Two things the agreement establishes. First, the bridges construct exactly the lifting
+`lcp_mpcc` writes by hand. The two routes do not merely converge to the same answer: they
+return bitwise identical vectors, on this problem and on all four Murphy–Smeers cases
+downstream. That is a structural fact rather than a numerical one, and it is worth stating
+in those terms — it says the MathOptComplements bridge stack, given an affine `[F; x]`
+pairing over nonnegative variables, produces the same NLP in the same variable order that
+this package builds directly, and that MadNLP is deterministic over it. It does not say
+two independent numerical paths agreed, and an earlier draft of this entry which claimed
+agreement "to twelve digits" invited exactly that misreading. Second, the pairing on the
+direct route — two index vectors, which is the one place the two routes can differ by
+construction (`docs/COMPLEMENTARITY_PAIRING.md`) — is right, and is checked directly by
+the callback-level testset rather than only inferred from the solves. F-0008 mis-pairs it
+on purpose and finds that the callback assertion and the relaxation route both go red. It
+also finds that the *penalty* route does not, so the sentence that stood here — that a
+swapped pair would have sent both direct solves elsewhere — was too strong, and the pairing
+rests on the explicit assertion rather than on the solvers noticing.
 
 What this does not do is compare the *methods*. Relaxation and penalty agreeing here is
 two solvers reaching one easy solution, not evidence that they behave alike where it
@@ -159,6 +167,48 @@ checkout is a legitimate state, and logs why. What it does not do is pass.
 The string is a courtesy licence for general use, not an individually issued academic one.
 It is not committed anywhere in these repositories and should not be.
 
+
+## F-0008 — The direct route's tests fail when the model is broken, and the callback-level test is what catches it — but the penalty backend alone would not have.
+
+- tier: validated
+- status: settled
+- date: 2026-09-10
+- evidence: three single-token mutations applied to a snapshot of the engine source, the suite run against each, and the file restored byte for byte afterwards (driver kept out of the repository; the mutations are stated below so they can be reapplied by hand) — (i) the pairing in `lcp_mpcc` rotated so that `x[i]` is paired with `w[i+1]`: 5 failures, one of them in "LCPVerticalModel is the LCP, callback by callback"; (ii) the Jacobian sparsity in `_lcp_jac_structure!` transposed by swapping `rows[k]` and `cols[k]`: 3 failures and 3 errors, one error in the callback test; (iii) the constraint sign flipped, `[-M I]` written as `[M I]`: 12 failures, four of them in the callback test
+- boundary: three mutations on one 2×2 problem, so this shows each check is live, not that the set of mutations is complete; each mutation is a single token, and a subtler one — a Jacobian correct except in one entry, say — has not been tried; the JuMP-route testsets are correctly insensitive to the two `lcp_nlp.jl` mutations because that route does not use the file, which is a consistency check on the controls themselves rather than a result; the controls were run against CCOpt v0.1.0 over MadNLP v0.10.1 and would need re-running after a version move, since what a solver does with a broken model is a property of the solver
+- supersedes: none
+
+Run because the Phase 2 self-review found that none of the new checks had been seen to
+fail, which by this repository's own standard is not yet knowing they are checks. All three
+mutations were caught. Two details are worth more than that headline.
+
+**The callback test earns its place.** "LCPVerticalModel is the LCP, callback by callback"
+went red on all three, and it is the only testset that localises the fault: it says the
+Jacobian is wrong, rather than saying a solver did not reach the answer. Its single test
+point with all-distinct coordinates was enough for every mutation tried, which is the
+argument F-0006's boundary makes and which had not until now been tested.
+
+**The penalty backend did not catch the mis-paired complementarity.** Under mutation (i)
+the testset "CCOpt (penalty, direct route)" passed both of its assertions, while the
+relaxation route's failed and the callback test's pairing assertion failed. So on this
+problem the penalty method returned a point that satisfies the *unmutated* LCP even though
+it was handed a mis-paired one. That is a fact about this problem and this solver rather
+than a defect — the residual is recomputed against the real `M` and `q`, so nothing false
+was asserted — but it means the penalty backend is not, on its own, a check on the pairing.
+The pairing is checked by the callback test and by the relaxation route, and F-0006's
+argument that "a swapped pair would have sent both direct solves to a different problem"
+is too strong as written: it sent one of them there.
+
+The mutations, for reanalysis:
+
+| # | file | change |
+|---|---|---|
+| i | `src/mpcc.jl` | `collect(n + 1:2n)` becomes `vcat(collect(n + 2:2n), [n + 1])` |
+| ii | `src/lcp_nlp.jl` | in `_lcp_jac_structure!`, `rows[k] = A.rowval[p]; cols[k] = col` becomes `rows[k] = col; cols[k] = A.rowval[p]` |
+| iii | `src/lcp_nlp.jl` | `[-Matrix{T}(M) …]` becomes `[Matrix{T}(M) …]` |
+
+The benchmarks repository's own controls, for the emitted upstream file and the regime
+classification, are its `FINDINGS.md` F-0010 and `scripts/negative_controls.jl`.
+
 ---
 
 ## What this does not establish
@@ -190,3 +240,4 @@ It is not committed anywhere in these repositories and should not be.
    **code** problem, and the first thing Phase 1 will press on.
 4. Report F-0007 upstream with the benchmarks repository's test case, and check whether a
    later CCOpt release has fixed it before the `CCOpt = "0.1"` bound is widened.
+5. ~~Confirm the direct route's tests fail when the model is broken.~~ Done — F-0008.
