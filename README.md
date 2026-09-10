@@ -7,8 +7,12 @@ and the residual recomputation that decides whether either of them actually solv
 No models live here. Murphy and Smeers (2005) is in `CapacityEquilibriaBenchmarks.jl`; the
 adequacy mechanisms are in `AdequacyMechanismSandpit.jl`. See `docs/BOUNDARY.md`.
 
-**Status: Phase 0.** A two-variable LCP with a hand-checkable answer solves through both
-PATH and CCOpt and the two agree. That is all that is claimed — see `FINDINGS.md`.
+**Status: Phase 0 complete; Phase 2's engine half done.** A two-variable LCP with a
+hand-checkable answer solves through PATH and through CCOpt by three routes — its
+relaxation method via JuMP, and its relaxation and penalty methods via an `MPCCModel` built
+directly — and all four land on the same point. That is all that is claimed here; see
+`FINDINGS.md`. The models that exercise these routes at size live in
+`CapacityEquilibriaBenchmarks.jl`.
 
 ## Getting set up
 
@@ -17,8 +21,8 @@ julia --project -e 'using Pkg; Pkg.instantiate()'
 julia --project -e 'using Pkg; Pkg.test()'
 ```
 
-Twelve tests should pass in about a minute after precompilation (eleven, with one skipped, if
-no PATH licence is configured — see below).
+Forty-one tests should pass in about two minutes after precompilation (forty, with one
+skipped, if no PATH licence is configured — see below).
 
 ### PATH licence
 
@@ -54,15 +58,21 @@ M, q = [2.0 1.0; 1.0 2.0], [-4.0, 1.0]
 build() = lcp_model(M, q)                       # 0 ≤ x ⟂ Mx + q ≥ 0
 
 path  = solve_complementarity(build, :path)
-ccopt = solve_complementarity(build, :ccopt)
+ccopt = solve_complementarity(build, :ccopt)    # CCOpt's relaxation method, through JuMP
 
 lcp_residual(M, q, path.x).worst                # 0.0 — the pass criterion
 path.x ≈ ccopt.x                                # true
+
+# The direct route: the same LCP as an MPCCModel built without JuMP, which is the only way
+# to reach CCOpt's penalty method. Takes (M, q) rather than a builder, and accepts :path
+# and :ccopt too, building the JuMP model itself.
+penalty = solve_complementarity(M, q, :ccopt_penalty)
+direct  = solve_complementarity(M, q, :ccopt_relaxation)
 ```
 
-`solve_complementarity` takes a *builder*, not a model, and calls it once per backend. Two
-solvers therefore cannot be handed different equations, and neither solve inherits bridges
-or an optimizer the other one attached.
+`solve_complementarity(build, backend)` takes a *builder*, not a model, and calls it once
+per backend. Two solvers therefore cannot be handed different equations, and neither solve
+inherits bridges or an optimizer the other one attached.
 
 The pass criterion is the residual, never the termination status. `lcp_residual` recomputes
 primal feasibility, dual feasibility and complementarity from the returned point alone; a
@@ -77,10 +87,12 @@ which is worth reading before touching the pairing.
 | `PATHSolver.jl` | Ground truth. Commercial, free academic licence — deliberate, see `DECISIONS.md` D-0002. |
 | `CCOpt.jl` | The object under test. v0.1.0, `madsuite-org/CCOpt.jl`. |
 | `MathOptComplements.jl` | Bridges an affine `[F; x]` pairing into the variable-pairing form CCOpt's optimizer requires. |
-| `MPCCModels.jl`, `NLPModelsJuMP.jl` | Pulled in by CCOpt's JuMP path; needed directly once the penalty method is reached (`FINDINGS.md` F-0004). |
+| `MPCCModels.jl`, `NLPModels.jl`, `MadNLP.jl` | The direct route. `LCPVerticalModel` is an `NLPModels.AbstractNLPModel`, `lcp_mpcc` wraps it as an `MPCCModels.MPCCModel`, and both of CCOpt's solvers run over MadNLP. |
+| `NLPModelsJuMP.jl` | Pulled in by CCOpt's JuMP path, and required for the extension that defines `CCOpt.Optimizer` to load at all. |
 
-CCOpt reaches only its relaxation method through JuMP. The penalty method needs the direct
-`MPCCModel` route and is not built yet.
+CCOpt reaches only its relaxation method through JuMP (`FINDINGS.md` F-0004). The direct
+`MPCCModel` route in `src/mpcc.jl` reaches both of its methods, and on every problem tried
+so far the relaxation method returns the same point by either route (F-0006).
 
 ## Documents
 

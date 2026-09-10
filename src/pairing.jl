@@ -28,6 +28,7 @@ function lcp_model(M::AbstractMatrix, q::AbstractVector)
     return model, x
 end
 
+# emit:lcp_residual:begin
 """
     lcp_residual(M, q, x) -> NamedTuple
 
@@ -51,3 +52,4 @@ function lcp_residual(M::AbstractMatrix, q::AbstractVector, x::AbstractVector)
     return (primal = primal, dual = dual, complementarity = comp,
             worst = max(primal, dual, comp))
 end
+# emit:lcp_residual:end
