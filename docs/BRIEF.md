@@ -5,13 +5,12 @@ a contract, this file is the claim and the docstring describes the current imple
 
 ## What it is
 
-The engine underneath a programme of capacity-expansion equilibrium models: the
-complementarity plumbing, the harness that solves one model with two independent solvers,
-and the residual recomputation that decides whether either of them actually solved it.
+The engine underneath capacity-expansion equilibrium models: the complementarity plumbing,
+the harness that solves one model with two independent solvers, and the residual
+recomputation that decides whether either of them actually solved it.
 
-It contains no models of anything. Murphy and Smeers (2005) lives in
-`CapacityEquilibriaBenchmarks.jl`; the adequacy mechanisms live in
-`AdequacyMechanismSandpit.jl`. See `docs/BOUNDARY.md`.
+It contains no models. Murphy and Smeers (2005) lives in `CapacityEquilibriaBenchmarks.jl`.
+See `docs/BOUNDARY.md`.
 
 ## The contracts
 

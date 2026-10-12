@@ -4,7 +4,7 @@ using Test
 import NLPModels
 import MPCCModels
 
-# The Phase 0 smoke test. Its job is to fail here, on a problem whose answer is known by
+# The smoke test. Its job is to fail here, on a problem whose answer is known by
 # hand, rather than later inside a model where a solver problem and a modelling problem
 # look identical.
 #
@@ -14,9 +14,9 @@ import MPCCModels
 # of the complementarity are active, which a problem with an interior solution would not
 # exercise. Unique, non-degenerate, and checkable without a solver.
 #
-# Phase 2 added the direct route (lcp_mpcc): the same LCP as an MPCCModel built without
-# JuMP, which is how CCOpt's penalty method is reached. The testsets below run the same
-# problem through all four backends and hold them to the same criterion.
+# The direct route (lcp_mpcc) is the same LCP as an MPCCModel built without JuMP, which is
+# how CCOpt's penalty method is reached. The testsets below run the same problem through
+# all four backends and hold them to the same criterion.
 
 const M = [2.0 1.0; 1.0 2.0]
 const Q = [-4.0, 1.0]
@@ -102,8 +102,7 @@ build() = lcp_model(M, Q)
     end
 
     @testset "the four backends agree" begin
-        # The question Phase 2 asks, in miniature: given the same LCP, do the routes and
-        # methods land on the same point? Disagreement here is a solver or a pairing
+        # Given the same LCP, do the routes and methods land on the same point? Disagreement here is a solver or a pairing
         # question; disagreement with X_STAR above is a modelling question.
         sols = Dict(b => solve_complementarity(M, Q, b) for b in BACKENDS)
         for b in BACKENDS

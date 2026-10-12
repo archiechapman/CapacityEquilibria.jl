@@ -1,14 +1,14 @@
 # CapacityEquilibria.jl
 
-The complementarity engine underneath a programme of capacity-expansion equilibrium models.
-It does three things: it builds a complementarity problem once and hands the same problem
-to two independent solvers, it recomputes from each returned point whether that point
-actually solves the problem, and it keeps the pairing of variables with conditions, the one
-place where a mistake converges cleanly to a wrong answer, in a single expression.
+A complementarity engine for capacity-expansion equilibrium models. It does three things:
+it builds a complementarity problem once and hands the same problem to two independent
+solvers, it recomputes from each returned point whether that point actually solves the
+problem, and it keeps the pairing of variables with conditions, the one place where a
+mistake converges cleanly to a wrong answer, in a single expression.
 
 There are no models here. Murphy and Smeers' capacity-expansion equilibria live in
-`CapacityEquilibriaBenchmarks.jl`, and the adequacy-mechanism work lives in
-`AdequacyMechanismSandpit.jl`. Both depend on this package, and it depends on neither.
+`CapacityEquilibriaBenchmarks.jl`, which depends on this package; this package depends on
+nothing downstream.
 
 ## The contracts
 

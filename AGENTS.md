@@ -1,66 +1,55 @@
 # CapacityEquilibria.jl — agent guide
 
-Read first: `docs/BRIEF.md` (what the engine is and what its contracts are) and `docs/BOUNDARY.md` (what
-belongs here versus in `CapacityEquilibriaBenchmarks.jl` and `AdequacyMechanismSandpit.jl`). Julia package;
-`julia --project -e 'using Pkg; Pkg.instantiate()'`. PATH needs a free academic licence in
-`PATH_LICENSE_STRING` before any solve will run.
+Read first: `docs/BRIEF.md` (what the engine is and what it promises) and `docs/BOUNDARY.md` (what belongs
+here and what belongs in a model repository). Julia package; `julia --project -e 'using Pkg;
+Pkg.instantiate()'`. PATH needs a licence in `PATH_LICENSE_STRING` for anything above 300 variables.
 
-If the code and this file disagree, the code is newer — but read the rationale in `DECISIONS.md` before
+If the code and this file disagree, the code is newer, but read the rationale in `DECISIONS.md` before
 overturning anything. Most of what looks arbitrary here was argued once already.
 
 ## Where the authoritative answers live
 
-This repo holds no empirical results. Numbers about published models live in
-`CapacityEquilibriaBenchmarks.jl`; numbers about adequacy mechanisms live in `AdequacyMechanismSandpit.jl`.
-What lives here is the engine and its contracts, and `docs/BRIEF.md` is authoritative for those — where a
-docstring and the brief disagree about a contract, the brief is the claim and the docstring is a description
-of the current implementation.
+This repository holds no model results; those belong to the repositories that own the models.
+`docs/BRIEF.md` is authoritative for the engine's contracts: where a docstring and the brief disagree, the
+brief is the claim and the docstring describes the current implementation.
 
-`FINDINGS.md` here records solver behaviour, not model results: where PATH and CCOpt.jl agree or diverge on a
-formulation class, which MPCC reformulations are well-posed, and what the residual-recomputation harness
-catches that a termination status does not. There is no ledger yet because there is no finding yet; the gate
-reporting `inapplicable` is the correct answer until there is.
-
-`FINDINGS.md` is the claim ledger. Cite findings by id (`F-0007`), never by the wording of the claim.
-`DECISIONS.md` is the decision log. Both are checked in CI; see the synced section below.
+`FINDINGS.md` records solver behaviour, not model results: where PATH and CCOpt.jl agree or diverge, which
+MPCC reformulations are well posed, and what the recomputed residual catches that a termination status does
+not. Cite findings by id (`F-0007`), never by wording. `DECISIONS.md` is the decision log. Both are checked
+by the gates in the synced section below.
 
 ## Hard rules (enforce, don't just suggest)
 
-- Nothing here may depend on `CapacityEquilibriaBenchmarks.jl` or `AdequacyMechanismSandpit.jl` — not in
-  `[deps]`, not in `[extras]`, not in `test/`. The dependency direction is one-way and downstream. A core
-  that reaches back upstream cannot be registered in General and breaks every outside user the moment one of
-  those repos is private, which one of them permanently is.
-- No paper-specific parameter values in `src/` or `test/`. A number here has no table and page it traces back
-  to, which is the provenance rule the replication work depends on; transcribed data belongs in the repo that
-  owns its source. Fixtures are synthetic and named as such.
-- PATH is ground truth and CCOpt.jl is the object under test. Never let CCOpt.jl's own termination status
-  stand as the pass criterion — recompute the complementarity residual and the market-clearing balance from
-  the returned point. A tool reporting its own success is not an oracle (`QUALITY.md`).
-- PATH is a commercial solver under a free academic licence, and that is deliberate, not technical debt. Do
-  not replace it with an open-source complementarity solver to remove the licence dependency; the whole
-  validation argument rests on PATH being the independent oracle. See `D-0002`.
-- Do not commit `Manifest.toml`. This is a library and consumers resolve their own; a committed manifest here
-  fights the pins that the downstream reproducible studies need to control themselves.
-- This repo is public. Nothing enters its history that is not meant to be permanent and world-readable — no
-  unpublished results, no manuscript drafts, no tables transcribed out of a publisher's PDF.
+- Nothing here may depend on a downstream repository: not in `[deps]`, not in `[extras]`, not in `test/`.
+  A core that reaches downstream cannot be registered in General, and breaks for every outside user the
+  moment a downstream repository is private.
+- No paper-specific parameter values in `src/` or `test/`. A number here has no table and page to trace
+  back to; transcribed data belongs in the repository that owns its source. Fixtures are synthetic and named
+  as such.
+- PATH is ground truth and CCOpt.jl is the object under test. Never let a termination status stand as the
+  pass criterion: recompute the residual from the returned point. A tool reporting its own success is not
+  an oracle.
+- PATH is a commercial solver under a free academic licence, and that is deliberate. Do not replace it with
+  an open-source complementarity solver to remove the licence dependency; the validation argument rests on
+  PATH being the independent oracle (D-0002).
+- Do not commit `Manifest.toml`. This is a library and consumers resolve their own versions.
+- This repository is public. Nothing enters its history that is not meant to be permanent and
+  world-readable: no unpublished results, no manuscript drafts, no tables transcribed from a publisher's PDF.
 
 ## Read before touching the complementarity pairing and its MPCC translation
 
-Full detail: `docs/COMPLEMENTARITY_PAIRING.md`
+Full detail: `docs/COMPLEMENTARITY_PAIRING.md`. The short version:
 
-Short version, so the rule survives an unfollowed link:
-
-- **Never** trust a solve that converged. A wrong pairing order or a flipped sign convention does not fail —
-  it converges cleanly to the answer to a different problem, and the capacities look plausible.
+- **Never** trust a solve that converged. A wrong pairing order or a flipped sign does not fail; it
+  converges cleanly to the answer to a different problem.
 - **Always** derive the MPCC index vectors (`ind_x1`, `ind_x2`) from the same pairing object the JuMP model
-  was built from. Re-listing the variables in what looks like the same order is how the two formulations
+  was built from. Re-listing the variables in what looks like the same order is how two formulations
   silently stop being the same problem.
 
 ## Tests
 
-`julia --project -e 'using Pkg; Pkg.test()'` — unit tests on synthetic fixtures only, no solver licence
-needed for the bulk of them. Set `CE_SOLVER_AGREEMENT=true` for the PATH-versus-CCOpt.jl agreement suite,
-which needs a PATH licence and is slow. Then the guardrail gates below.
+`julia --project -e 'using Pkg; Pkg.test()'` runs every backend on synthetic fixtures; the licence testset
+skips without `PATH_LICENSE_STRING`. Then run the gates below.
 
 <!-- guardrails:begin -->
 ## Portfolio conventions

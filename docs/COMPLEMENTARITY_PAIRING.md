@@ -66,6 +66,5 @@ stop.
 
 CCOpt's MathOptInterface layer constructs a `CCOpt.RelaxationSolver` unconditionally. There
 is no raw optimizer attribute that selects `CCOpt.PenaltySolver`, so the penalty method is
-not reachable through JuMP at all. Solving with both of CCOpt's documented methods — which
-the replication plan's Phase 2 requires — means building the `MPCCModel` directly and
-bypassing the JuMP path. See `FINDINGS.md`.
+not reachable through JuMP at all. Solving with both of CCOpt's methods means building the
+`MPCCModel` directly, which `lcp_mpcc` does. See `FINDINGS.md` F-0004 and F-0006.

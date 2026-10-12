@@ -83,8 +83,7 @@ makedocs(;
     ],
 )
 
-# Deployment happens only from CI, and only once the repository is public (DECISIONS.md
-# D-0001). Run locally, this is skipped.
+# Deployment happens only from CI. Run locally, this is skipped.
 if get(ENV, "CI", "false") == "true"
     deploydocs(; repo = "github.com/archiechapman/CapacityEquilibria.jl.git",
                devbranch = "main", push_preview = false)

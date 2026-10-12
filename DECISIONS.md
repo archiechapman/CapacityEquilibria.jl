@@ -14,20 +14,19 @@ Checked by `check_decision_log.py`. Ids are stable and never reused.
 
 - date: 2026-09-09
 - status: active
-- question: Should the engine, the published-model replications, and the adequacy-mechanism work live in one
+- question: Should the engine, the published-model replications, and the application work live in one
   repository or in separate ones?
 - options: a single repository, which keeps refactors atomic but makes visibility all-or-nothing; two
-  repositories, engine and everything-else; three repositories, splitting the replications from the
-  mechanism work because they carry different embargo dates; a private monorepo with a filtered public
-  mirror of the engine
+  repositories, engine and everything else; three repositories, splitting the replications from the
+  application work because they become public at different times; a private monorepo with a filtered
+  public mirror of the engine
 - decision: Three repositories. `CapacityEquilibria.jl` holds the engine and is the one intended to be
-  public and registered; `CapacityEquilibriaBenchmarks.jl` holds published models with published answers;
-  `AdequacyMechanismSandpit.jl` holds the mechanism programme. Dependencies run downstream only and never
-  back. All three were created private on 2026-09-09; see the note below on when each opens.
+  public and registered; `CapacityEquilibriaBenchmarks.jl` holds published models with known answers; a
+  third, private repository holds the application work. Dependencies run downstream only and never back.
 - evidence: judgement, no measurement — the constraint is not performance but Julia packaging and GitHub
   visibility. A registered package cannot depend on a private or unregistered one, and GitHub visibility is
-  per-repository, so a subdirectory cannot be held back. The engine is wanted public immediately and the
-  mechanism work is not, which forces the split whatever else is true.
+  per-repository, so a subdirectory cannot be held back. The engine and the replications can be public
+  well before the application work can, which forces the split whatever else is true.
 - cost_of_change: Cheap in the merge direction and expensive in the split direction. Collapsing three repos
   into one is a day. Splitting later means either a history rewrite or publishing a history that was written
   on the assumption nobody would read it, which is the specific thing this avoids.
@@ -42,18 +41,11 @@ public history is synthetic, and an outside contribution to the mirror has nowhe
 that replaces it — a core change silently breaking downstream work — is real and is paid for with reverse CI
 rather than with a merge.
 
-**On visibility, and why this entry no longer says "public" in the present tense.** All three repositories
-were created private. Wanting this one public is what forced the split and is still the intent, but on the
-day the split happened this repository held an `AGENTS.md` and a decision log and no Julia code, and there
-is nothing to be gained from publishing process scaffolding. Going public later is a settings toggle with
-the history intact; going public early cannot be undone. So the trigger is code: this repository opens
-once it has an engine someone could actually use, which in practice means the complementarity plumbing and
-the solver harness, and registration follows from there.
-
-The other two are governed by their own logs and are not covered by that trigger —
-`CapacityEquilibriaBenchmarks.jl` D-0002 opens on its Phase 1 gate, and `AdequacyMechanismSandpit.jl`
-D-0001 opens per publication. The three dates are deliberately different and should not be collapsed into
-one release event.
+**On visibility.** All three repositories were created private, because publishing process scaffolding
+gains nothing and going public cannot be undone. This one opens once it has an engine someone could use,
+which it now has: the complementarity plumbing, the solver harness and the residual check. Registration
+follows from there. The benchmarks repository opens under its own D-0002; the application repository
+stays private until its work is published.
 
 ## D-0002 — PATH is the oracle; CCOpt.jl is the object under test.
 
@@ -140,8 +132,8 @@ like a tidy-up to someone arriving later.
   and `q` directly (`test/runtests.jl`, "LCPVerticalModel is the LCP, callback by
   callback"); swapping in an `ADNLPModel` is a one-file change and that test carries over
   unchanged, which is the point of writing it against the matrices rather than the type.
-- revisit_if: The engine needs a nonlinear complementarity form — the closed-loop model of
-  Phase 3, whose second-stage map is not affine (`CapacityEquilibriaBenchmarks.jl` F-0003)
-  — at which point hand-writing Jacobians stops being transcription and automatic
+- revisit_if: The engine needs a nonlinear complementarity form — the closed-loop model,
+  whose second-stage map is not affine (`CapacityEquilibriaBenchmarks.jl` F-0003) — at
+  which point hand-writing Jacobians stops being transcription and automatic
   differentiation earns its dependency; or CCOpt's maintainers ask for the upstream file in
   `ADNLPModel` form.

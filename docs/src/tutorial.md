@@ -1,7 +1,7 @@
 # One LCP, four routes
 
 This tutorial runs the engine on the smallest problem worth running it on: two variables
-and a solution you can check with a pencil. It is the Phase 0 smoke test from
+and a solution you can check with a pencil. It is the smoke test in
 `test/runtests.jl`, and its job there is the same as here. It should fail on a problem
 whose answer is known, rather than later, inside a model where a solver problem and a
 modelling problem look the same.

@@ -1,7 +1,7 @@
 # Findings — CapacityEquilibria.jl
 
-*Whether the two solvers this programme depends on behave the way the plan assumed. Not
-whether any model is right — no model exists here.*
+*How the two solvers the engine depends on behave. Not whether any model is right; no
+model exists here.*
 
 *Last updated 2026-09-10. Produced against Julia 1.11.3, CCOpt v0.1.0, MadNLP v0.10.1,
 PATHSolver v1.7.9, JuMP v1.31.2, MPCCModels v0.1.0, MathOptComplements v0.1.1, on
@@ -22,9 +22,8 @@ Tiers are defined in `research-guardrails/QUALITY.md`. Statuses are `open`, `set
 - boundary: one 2×2 linear complementarity problem with a unique non-degenerate solution, on this machine and these package versions; assumes the hand-derived solution x = (2, 0) is correct, which is checkable by substitution and is asserted separately in the first testset; says nothing about problems large enough to hit PATH's demonstration-licence limit, about degenerate or multiple solutions, or about any equilibrium model
 - supersedes: none
 
-This is the Phase 0 gate from the replication plan: confirm a trivial complementarity
-problem solves through both PATH and CCOpt before writing model code, so that a later
-failure can be attributed to the model rather than the environment.
+The first check: a trivial complementarity problem solves through both PATH and CCOpt,
+so that a later failure can be attributed to a model rather than to the environment.
 
 M = [2 1; 1 2], q = (−4, 1), solution x = (2, 0) with F = (0, 3). The problem was chosen so
 that both branches of the complementarity are active — one variable positive with a zero
@@ -35,7 +34,7 @@ Both backends pass on `lcp_residual(...).worst < 1e-6`, recomputed from the retu
 and neither testset asserts a termination status. That is the D-0002 discipline in the one
 place it is currently exercisable.
 
-## F-0002 — CCOpt.jl is registered and tagged, contradicting the premise of the plan's Phase 0.
+## F-0002 — CCOpt.jl is registered and tagged, so it is bounded by version rather than pinned by commit.
 
 - tier: validated
 - status: settled
@@ -44,16 +43,14 @@ place it is currently exercisable.
 - boundary: the General registry as of this date; assumes the registry mirror is current, which `Pkg.Registry.update()` was run to ensure; a single tagged version is not the same as a stable API, so this narrows the pinning question without settling the compatibility one
 - supersedes: none
 
-The replication plan says CCOpt.jl "has no tagged releases at the time of writing" and
-directs pinning it to a commit SHA in `Manifest.toml`. It has one tagged release, `0.1.0`,
-and is in the General registry, so an ordinary compat bound does the job. This fires
-`CapacityEquilibriaBenchmarks.jl` D-0003's own `revisit_if` on the day it was written.
+CCOpt.jl was expected to be unreleased, needing a commit pin in `Manifest.toml`. It has
+one tagged release, `0.1.0`, and is in the General registry, so an ordinary compat bound
+does the job (`CapacityEquilibriaBenchmarks.jl` D-0003).
 
-The plan also names the upstream repository as `MadNLP/CCOpt.jl` in its Phase 5 outreach
-step. It is `madsuite-org/CCOpt.jl`. `MPCCModels.jl` is likewise `madsuite-org`, though
-CCOpt's README still points at `MadNLP/MPCCModels.jl`.
+The upstream repository is `madsuite-org/CCOpt.jl`, and `MPCCModels.jl` is likewise
+`madsuite-org`, though CCOpt's README pointed at `MadNLP/MPCCModels.jl`.
 
-## F-0003 — The plan's sketch of CCOpt's API does not match the package.
+## F-0003 — CCOpt exports nothing, its MPCC constructor lives in MPCCModels, and it has a JuMP path.
 
 - tier: validated
 - status: settled
@@ -62,15 +59,14 @@ CCOpt's README still points at `MadNLP/MPCCModels.jl`.
 - boundary: CCOpt v0.1.0; assumes the README describes the package rather than an aspiration, which the working smoke test supports for the relaxation path; the direct `MPCCModel` route in the README has not been exercised here, only the JuMP route
 - supersedes: none
 
-The plan specifies `CCOpt.MPCCModelVarVar(nlp, ind_x1, ind_x2)`. No such name exists. The
-constructor is `MPCCModels.MPCCModel(nlp, ind_x1, ind_x2)`, from a separate package, and
-solving is `CCOpt.solve_homotopy!(CCOpt.RelaxationSolver(mpcc))`.
+There is no `CCOpt.MPCCModelVarVar`, a name in circulation in earlier descriptions of the
+package. The constructor is `MPCCModels.MPCCModel(nlp, ind_x1, ind_x2)`, from a separate
+package, and solving is `CCOpt.solve_homotopy!(CCOpt.RelaxationSolver(mpcc))`.
 
-CCOpt also exports nothing at all, so every name needs qualifying. And it has a JuMP path
-the plan does not mention — `MathOptComplements` bridges plus `CCOpt.Optimizer` — which is
-what `solve_complementarity` uses, and which matters well beyond Phase 0: it means the same
-JuMP model can serve both solvers, rather than the MPCC being a hand-translated second
-formulation that could drift from the first.
+CCOpt exports nothing, so every name needs qualifying. It also has a JuMP path,
+`MathOptComplements` bridges plus `CCOpt.Optimizer`, which is what `solve_complementarity`
+uses. That matters: the same JuMP model can serve both solvers, rather than the MPCC being
+a hand-translated second formulation that could drift from the first.
 
 ## F-0004 — CCOpt's penalty method is unreachable through JuMP.
 
@@ -82,13 +78,11 @@ formulation that could drift from the first.
 - supersedes: none
 
 The oracle here is the installed source, read directly. What it is independent of is the
-plan's API sketch and the README, both of which describe `PenaltySolver` as an equal
-alternative without saying it is out of reach from the modelling layer.
+README, which presents `PenaltySolver` as an equal alternative without saying it is out of
+reach from the modelling layer.
 
-This is a Phase 2 problem, not a Phase 0 one. The plan requires solving the open-loop case
-with "both of CCOpt.jl's documented methods", and half of that cannot be done through the
-JuMP model. Phase 2 therefore has to build the `MPCCModel` directly for the penalty run —
-which reintroduces exactly the hand-translation risk the JuMP path removes, so the two
+Solving with both methods therefore means building the `MPCCModel` directly for the penalty
+run, which reintroduces exactly the hand-translation risk the JuMP path removes, so the two
 routes need checking against each other rather than being assumed equivalent.
 
 Settled on 2026-09-10 by F-0006, which builds that route and checks it. The claim in the
@@ -177,8 +171,8 @@ It is not committed anywhere in these repositories and should not be.
 - boundary: three mutations on one 2×2 problem, so this shows each check is live, not that the set of mutations is complete; each mutation is a single token, and a subtler one — a Jacobian correct except in one entry, say — has not been tried; the JuMP-route testsets are correctly insensitive to the two `lcp_nlp.jl` mutations because that route does not use the file, which is a consistency check on the controls themselves rather than a result; the controls were run against CCOpt v0.1.0 over MadNLP v0.10.1 and would need re-running after a version move, since what a solver does with a broken model is a property of the solver
 - supersedes: none
 
-Run because the Phase 2 self-review found that none of the new checks had been seen to
-fail, which by this repository's own standard is not yet knowing they are checks. All three
+Run because none of the direct route's checks had yet been seen to fail, which by this
+repository's own standard is not yet knowing they are checks. All three
 mutations were caught. Two details are worth more than that headline.
 
 **The callback test earns its place.** "LCPVerticalModel is the LCP, callback by callback"
@@ -213,35 +207,22 @@ classification, are its `FINDINGS.md` F-0010 and `scripts/negative_controls.jl`.
 
 ## What this does not establish
 
-- Nothing about correctness on any model of anything. There is no equilibrium in this
-  package yet, and F-0001 is a solver check, not a modelling one.
+- Nothing about correctness on any model. There is no equilibrium in this package, and
+  F-0001 is a solver check, not a modelling one.
 - Nothing about problems at realistic scale. The largest problem solved here is a
-  400-variable LCP built to test the licence (F-0005), not a model of anything; CCOpt has
-  only ever been run on the 2×2.
-- Nothing about CCOpt's accuracy relative to PATH beyond agreement to 1e-6 on one problem
-  with one solution. Where the two disagree is the interesting case and has not occurred.
-- Nothing about the penalty method's behaviour. F-0004 says it cannot be reached through
-  JuMP, not that it works or does not work when reached directly.
+  400-variable LCP built to test the licence (F-0005). The 14- and 18-variable
+  Murphy–Smeers problems are in the benchmarks repository's ledger.
+- Nothing about where CCOpt and PATH disagree. On the problems here they agree to well
+  inside 1e-6; the benchmarks repository records the harder cases.
 - No claim that these package versions will resolve the same way tomorrow. The engine
-  deliberately does not commit a `Manifest.toml` (D-0001 in the benchmarks repo covers the
-  side that does).
+  deliberately does not commit a `Manifest.toml`; the benchmarks repository does.
 
 ## What remains
 
-1. ~~Register the PATH licence.~~ Done — F-0005. The courtesy licence solves 400
-   variables and its absence is detectable. An individually issued academic licence is
-   still worth having before the closed-loop runs, since the courtesy string is shared and
-   dated.
-2. ~~Build the direct `MPCCModels.MPCCModel` route so the penalty method is reachable, and
-   check it against the JuMP route on the F-0001 problem (F-0004).~~ Done — F-0006. The
-   two formulations did not diverge, and the bridges turned out to change nothing.
-3. Decide whether `lcp_residual` generalises to the mixed complementarity systems the real
-   models need, or whether it is the LCP-only special case it currently looks like. A
-   **code** problem, and the first thing Phase 1 will press on.
-4. Report F-0007 upstream with the benchmarks repository's test case, and check whether a
-   later CCOpt release has fixed it before the `CCOpt = "0.1"` bound is widened.
-5. Decide what replaces the recomputed residual as a pass criterion on a degenerate problem,
+1. Decide whether `lcp_residual` generalises to the mixed complementarity systems real
+   models need, or is the LCP-only special case it currently looks like.
+2. Report F-0007 upstream, and check whether a later CCOpt release has fixed it before the
+   `CCOpt = "0.1"` bound is widened.
+3. Decide what replaces the recomputed residual as a pass criterion on a degenerate problem,
    where it measures the dual's arbitrariness rather than the solver's accuracy
-   (`CapacityEquilibriaBenchmarks.jl` F-0015, and the note appended to D-0002). Open, and
-   the first thing Phase 4 will press on if the monolithic MPCC is built.
-6. ~~Confirm the direct route's tests fail when the model is broken.~~ Done — F-0008.
+   (`CapacityEquilibriaBenchmarks.jl` F-0015, and the note appended to D-0002).
