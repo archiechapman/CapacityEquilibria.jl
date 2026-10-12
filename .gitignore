@@ -6,3 +6,9 @@ __pycache__/
 # This is a library: consumers resolve their own versions (DECISIONS.md, D-0001).
 # The repositories downstream of this one commit theirs, deliberately.
 /Manifest.toml
+
+# The documentation build. docs/src/generated/ is copied in from the design notes and the
+# ledgers by docs/make.jl, so that the site cannot drift from them.
+/docs/build/
+/docs/src/generated/
+/docs/Manifest.toml

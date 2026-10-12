@@ -37,22 +37,34 @@ because none of them may (D-0003). Fixtures are synthetic and hand-checkable.
 
 ## Current state
 
-Phase 0 of `CapacityEquilibriaBenchmarks.jl/docs/ms_ccopt_replication_plan.md`: the
-environment is set up and a two-variable LCP with a known answer solves through both PATH
-and CCOpt. That is all. There is no dispatch LP, no revenue-function interface, and no
-equilibrium of anything yet.
+The engine solves linear complementarity problems, through PATH and through CCOpt by three
+routes, and judges every answer by a recomputed residual. That covers the open-loop models
+in `CapacityEquilibriaBenchmarks.jl` and the second stage of its closed-loop model, which
+are LCPs. The one problem built there that is not an LCP, a player's best response written
+as an MPCC with a nonconvex objective, is built directly against CCOpt in that repository
+and has not been generalised into the engine. There is no mixed or nonlinear
+complementarity form here, no dispatch LP, no revenue-function interface, and no
+equilibrium of anything.
 
-The public API is `lcp_model`, `lcp_residual`, `solve_complementarity` and
-`ComplementaritySolution`. It is version `0.0.1` and will change shape as the first real
-model arrives; nothing downstream should treat it as stable yet.
+The public API is `lcp_model`, `lcp_residual`, `solve_complementarity`,
+`ComplementaritySolution`, `LCPVerticalModel` and `lcp_mpcc`. It is version `0.0.1` and
+will change shape as the first nonlinear model arrives; nothing downstream should treat it
+as stable yet.
+
+The residual contract has one recorded limit. On a degenerate problem whose dual is an
+unbounded ray, a solver can return a correct primal and a dual far out along the ray, and
+the residual is then the product of the two: large, and not a measure of accuracy. A small
+residual is evidence of a solution; a large one is evidence of a solution or of an
+unbounded dual (`DECISIONS.md` D-0002, the appended note).
 
 ## Solver notes
 
-**PATH** needs a licence. Without `PATH_LICENSE_STRING` set, PATHSolver.jl falls back to a
-size-limited demonstration licence, which is enough for the smoke test and will not be
-enough for a real equilibrium. The free academic licence is the intended configuration and
-registering it is Phase 0 work in the plan — see `README.md`.
+**PATH** needs a licence for anything above 300 variables. Without `PATH_LICENSE_STRING`
+set, PATHSolver.jl falls back to a size-limited demonstration licence and refuses larger
+problems, which the test suite checks surfaces as a failure rather than a quiet
+truncation. See `README.md`.
 
 **CCOpt** reaches only its relaxation method through JuMP; its MathOptInterface layer builds
 a `RelaxationSolver` unconditionally. The penalty method requires constructing the
-`MPCCModels.MPCCModel` directly. See `docs/COMPLEMENTARITY_PAIRING.md` and `FINDINGS.md`.
+`MPCCModels.MPCCModel` directly, which `lcp_mpcc` does. See
+`docs/COMPLEMENTARITY_PAIRING.md` and `FINDINGS.md`.

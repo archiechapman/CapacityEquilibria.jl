@@ -7,12 +7,16 @@ and the residual recomputation that decides whether either of them actually solv
 No models live here. Murphy and Smeers (2005) is in `CapacityEquilibriaBenchmarks.jl`; the
 adequacy mechanisms are in `AdequacyMechanismSandpit.jl`. See `docs/BOUNDARY.md`.
 
-**Status: Phase 0 complete; Phase 2's engine half done.** A two-variable LCP with a
-hand-checkable answer solves through PATH and through CCOpt by three routes — its
-relaxation method via JuMP, and its relaxation and penalty methods via an `MPCCModel` built
-directly — and all four land on the same point. That is all that is claimed here; see
-`FINDINGS.md`. The models that exercise these routes at size live in
-`CapacityEquilibriaBenchmarks.jl`.
+**Status: the linear engine is complete; the nonlinear one is not started.** A two-variable
+LCP with a hand-checkable answer solves through PATH and through CCOpt by three routes —
+its relaxation method via JuMP, and its relaxation and penalty methods via an `MPCCModel`
+built directly — and all four land on the same point, the two relaxation routes bitwise.
+The tests that guard the direct route have been seen to fail when the route is broken
+(`FINDINGS.md` F-0008). One limit on the pass criterion has been found and recorded rather
+than absorbed: on a degenerate problem whose dual is an unbounded ray, the recomputed
+residual measures where along the ray a solver stopped, not whether it solved anything
+(the note appended to `DECISIONS.md` D-0002). The models that exercise these routes at
+size, and on harder problems, live in `CapacityEquilibriaBenchmarks.jl`.
 
 ## Getting set up
 
@@ -94,9 +98,32 @@ CCOpt reaches only its relaxation method through JuMP (`FINDINGS.md` F-0004). Th
 `MPCCModel` route in `src/mpcc.jl` reaches both of its methods, and on every problem tried
 so far the relaxation method returns the same point by either route (F-0006).
 
+## Documentation
+
+A documentation site builds from `docs/`:
+
+```
+julia --project=docs -e 'using Pkg; Pkg.instantiate()'
+julia --project=docs docs/make.jl          # writes docs/build/index.html
+```
+
+It holds two tutorials and the API reference. *One LCP, four routes* solves the Phase 0
+problem through every backend and breaks the pairing on purpose to show what a wrong one
+does: it converges, reports success, and is answered only by the residual. *When the
+residual stops measuring accuracy* is a two-variable problem with an unbounded dual ray,
+on which the pass criterion itself fails, which is the D-0002 limit in its smallest form.
+
+Every code block in the tutorials runs during the build, and each claim the prose makes is
+an `@assert` beside it, so a claim that stops holding fails the build. The build takes
+about a minute and a half once packages are compiled. The design notes and the two ledgers
+are copied into the site from their canonical files at build time rather than duplicated.
+`make.jl` deploys only from CI, which does not exist yet and will not until this
+repository is public (D-0001).
+
 ## Documents
 
 - `AGENTS.md` — the agent guide, and the hard rules
+- `docs/src/` — the documentation site's own pages: the tutorials and the API reference
 - `docs/BRIEF.md` — what this package promises
 - `docs/BOUNDARY.md` — what belongs here versus downstream
 - `docs/COMPLEMENTARITY_PAIRING.md` — the one dangerous area

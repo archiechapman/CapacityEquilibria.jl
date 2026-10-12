@@ -1,0 +1,15 @@
+[deps]
+CCOpt = "6689419a-93c1-455a-8ac6-77991ec4f86b"
+CapacityEquilibria = "319ee36c-c5cc-40be-a95f-db79b5c1348c"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+MPCCModels = "cbaba3ef-cedb-4e5a-9903-71bbac24a74a"
+MadNLP = "2621e9c9-9eb4-46b1-8089-e8c72242dfb6"
+
+[sources]
+CapacityEquilibria = {path = ".."}
+
+[compat]
+CCOpt = "0.1"
+Documenter = "1"
+MPCCModels = "0.1"
+MadNLP = "0.10"
