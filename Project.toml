@@ -19,6 +19,7 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 [compat]
 CCOpt = "0.1"
 JuMP = "1"
+LinearAlgebra = "1"
 MPCCModels = "0.1"
 MadNLP = "0.10"
 MathOptComplements = "0.1"
@@ -26,7 +27,7 @@ MathOptInterface = "1"
 NLPModels = "0.21, 0.22"
 NLPModelsJuMP = "0.13"
 PATHSolver = "1.7"
-SparseArrays = "1.10, 1.11"
+SparseArrays = "1"
 julia = "1.10"
 
 [extras]

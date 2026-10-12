@@ -140,6 +140,11 @@ in place of the wording. It is worth reporting upstream alongside the benchmarks
 repository's test case: it is a one-word fix, and any JuMP user who calls `raw_status`
 after a CCOpt solve hits it.
 
+*Corrected by F-0009, 2026-10-12.* It is not a one-word fix. Renaming `opt` to `opts`
+would stop the throw and pass the wrong object: `opts` holds CCOpt's own
+`RelaxationOptions`, while `MadNLP.get_status_output` reads MadNLP's tolerances. The
+defect, its reproduction and its harmlessness here stand.
+
 ## F-0005 — The courtesy PATH licence lifts the demonstration size limit, and its absence fails loudly rather than quietly.
 
 - tier: validated
@@ -203,6 +208,38 @@ The mutations, for reanalysis:
 The benchmarks repository's own controls, for the emitted upstream file and the regime
 classification, are its `FINDINGS.md` F-0010 and `scripts/negative_controls.jl`.
 
+
+## F-0009 — The fix for F-0007 reads MadNLP's options from the solve's statistics, and its test fails without the fix, on the defect itself, and passes with it.
+
+- tier: validated
+- status: settled
+- date: 2026-10-12
+- evidence: `upstream/ccopt_raw_status_string/fix.patch` and `test.patch`, against `madsuite-org/CCOpt.jl`; `scripts/check_raw_status_fix.jl`, which clones CCOpt at a revision, applies the test alone and requires it to fail with output containing `has no field opt`, then applies the fix and requires it to pass, in a throwaway project holding CCOpt's declared test dependencies and the clone — PASSED on `master` at 05dc0a0 and on the `v0.1.0` tag at a2f9f6b; both patches leave their hunks unchanged under CCOpt's `.JuliaFormatter.toml` with JuliaFormatter 2.14.0
+- boundary: two revisions of CCOpt, Julia 1.11.3 on Windows; the test exercises the relaxation solver the MathOptInterface layer always builds, not the `MadNLPSolver` fallback for a model with no complementarity, which the fix also covers by reading `stats.options` rather than the solver's fields, but which is unexercised; the failure mode is an upstream change to `CCOptExecutionStats` that drops its `options` field, which the test would catch
+- supersedes: none — corrects the remedy proposed in F-0007
+
+The getter read `optimizer.solver.opt`, a field `RelaxationSolver` does not have. The
+obvious one-word repair, `opts`, names a field that exists but holds CCOpt's
+`RelaxationOptions`, whereas `MadNLP.get_status_output(status, opt)` reads `opt.tol` and
+`opt.acceptable_tol` from MadNLP's options. Both kinds of statistics the layer can hold,
+`CCOptExecutionStats` and `MadNLPExecutionStats`, carry MadNLP's options in a field
+`options`, so the fix reads them from there. It also changes the guard from
+`optimizer.solver === nothing` to `optimizer.stats === nothing`, because `copy_to` sets the
+solver before `optimize!` runs: between the two, the old guard passed and the getter would
+have failed on the missing statistics instead.
+
+The test, `test_raw_status_string`, is written for their `test/MOI_wrapper.jl`, whose
+tests their CI runs whenever the MathOptInterface extension changes, as a fix would. It
+solves `min (x₁−1)² + (x₂−1)²` subject to `0 ≤ x₁ ⟂ x₂ ≥ 0` through a caching optimizer
+and asserts that the raw status is a string reporting success.
+
+**Found on the way: the two revisions end this problem differently.** On `v0.1.0` the
+solve finishes at MadNLP's acceptable level, `ALMOST_LOCALLY_SOLVED`; on `master` it is
+`LOCALLY_SOLVED`. The only code change between them is CCOpt's #78, which sets MadNLP's
+`bound_relax_factor` to zero unless the user overrides it, so that is the likely cause.
+The test accepts either outcome, as CCOpt's own tests do, since its subject is the status
+string and not the solver's accuracy.
+
 ---
 
 ## What this does not establish
@@ -221,8 +258,8 @@ classification, are its `FINDINGS.md` F-0010 and `scripts/negative_controls.jl`.
 
 1. Decide whether `lcp_residual` generalises to the mixed complementarity systems real
    models need, or is the LCP-only special case it currently looks like.
-2. Report F-0007 upstream, and check whether a later CCOpt release has fixed it before the
-   `CCOpt = "0.1"` bound is widened.
+2. Offer F-0009's fix and test upstream with the report of F-0007, and check whether a
+   later CCOpt release has fixed it before the `CCOpt = "0.1"` bound is widened.
 3. Decide what replaces the recomputed residual as a pass criterion on a degenerate problem,
    where it measures the dual's arbitrariness rather than the solver's accuracy
    (`CapacityEquilibriaBenchmarks.jl` F-0015, and the note appended to D-0002).

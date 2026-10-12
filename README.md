@@ -108,6 +108,8 @@ ledgers are copied in from their canonical files at build time.
 - `docs/BOUNDARY.md`: what belongs here and what belongs in a model repository
 - `docs/COMPLEMENTARITY_PAIRING.md`: the one dangerous area
 - `FINDINGS.md`, `DECISIONS.md`: the claim ledger and the decision log
+- `upstream/ccopt_raw_status_string/`: a fix for CCOpt.jl's `MOI.RawStatusString` (F-0007)
+  and its test, checked by `scripts/check_raw_status_fix.jl` (F-0009)
 - `AGENTS.md`: conventions for automated contributors
 
 ## Licence

@@ -51,6 +51,9 @@ Full detail: `docs/COMPLEMENTARITY_PAIRING.md`. The short version:
 `julia --project -e 'using Pkg; Pkg.test()'` runs every backend on synthetic fixtures; the licence testset
 skips without `PATH_LICENSE_STRING`. Then run the gates below.
 
+`julia scripts/check_raw_status_fix.jl [REV]` checks the patches in `upstream/ccopt_raw_status_string/`
+against a CCOpt.jl revision: the test must fail without the fix, on the defect, and pass with it (F-0009).
+
 <!-- guardrails:begin -->
 ## Portfolio conventions
 
