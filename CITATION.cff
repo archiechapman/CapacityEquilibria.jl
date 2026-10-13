@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "CapacityEquilibria.jl"
+abstract: >-
+  A complementarity engine for capacity-expansion equilibrium models. It builds a problem
+  once, solves it with two independent solvers, PATH and CCOpt.jl, and judges each answer
+  by a residual recomputed from the returned point.
+type: software
+authors:
+  - family-names: Chapman
+    given-names: Archie
+    orcid: "https://orcid.org/0000-0002-5055-3004"
+version: 0.0.1
+license: BSD-3-Clause
+repository-code: "https://github.com/archiechapman/CapacityEquilibria.jl"
+keywords:
+  - capacity expansion
+  - equilibrium
+  - complementarity
+  - MPCC
+  - Julia
